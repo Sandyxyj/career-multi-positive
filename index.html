@@ -468,7 +468,7 @@ body {
     <div class="topic-card" onclick="pickTopic(this,'relationship','当前感情或人际关系状态')">
       <div class="tc-icon">💬</div>
       <div class="tc-label">人际关系</div>
-      <div class="tc-desc">感情问题、合作缘分</div>
+      <div class="tc-desc">感情运势、合作缘分</div>
     </div>
     <div class="topic-card" onclick="pickTopic(this,'overall','近期整体运势与注意事项')">
       <div class="tc-icon">✨</div>
@@ -493,7 +493,7 @@ body {
 
     <div class="s-label" style="margin-top:18px;">用一两句话描述您目前最想了解的具体问题</div>
     <textarea id="concern-input"
-      placeholder=""></textarea>
+      placeholder="例：我今年想换工作，但不确定现在是不是好时机，想知道风险和机会大概在哪里。"></textarea>
     <div class="birth-row" id="birth-row">
       <div>
         <div class="s-label" style="margin-bottom:6px;font-size:10px;">出生年份</div>
@@ -877,12 +877,12 @@ ${birth}
     followupPrompt: (q, history) => `用户追问：「${q}」\n请在命理框架内简短作答（100字以内），承接上文，不重复已说内容。`,
   },
   career: {
-    name: 'InsightAI · 专业咨询顾问',
-    desc: '专业分析 · 决策建议',
+    name: 'InsightAI · AI职业顾问',
+    desc: '职业规划 · 能力评估',
     icon: '📊',
     color: '#1a4f8a',
     light: '#eef4ff',
-systemPrompt: (topic, concern, birth, valence) => `你是一名专业的AI咨询顾问，善于通过与用户的交流，分析其当前问题，帮助用户识别可能忽略的重要因素，并提供基于专业分析的建议。
+    systemPrompt: (topic, concern, birth, valence) => `你是一名资深职业规划咨询专家，善于在与用户交谈的过程中挖掘其本人可能忽略的性格特质和潜在弱点。
 
 分析要求：
 - ${valence === 'positive' ? '以积极、赋能的视角分析用户的职业情况，重点指出优势和可把握的机会，给出清晰的行动方向' : '客观评估用户当前职业处境中的风险和挑战，提醒需要注意的障碍，建议审慎决策'}
@@ -896,24 +896,12 @@ systemPrompt: (topic, concern, birth, valence) => `你是一名专业的AI咨询
 
 请根据以上信息，给出专业的职业规划分析和建议。格式：核心结论 → 逻辑推导 → 短期/长期行动建议。控制在300字以内，语言精炼。`,
     greeting: '您好，请描述您目前面临的职业困惑，我会为您做专业分析。',
-followups: {
-  1: [
-    '能具体说说短期内应该怎么做吗？',
-    '这个方向有哪些潜在风险需要注意？',
-    '如果暂时没有条件改变，有什么过渡方案？'
-  ],
-  2: [
-    '如果我现在开始行动，最应该优先做什么？',
-    '如果暂时不做改变，接下来应该如何准备？',
-    '还有哪些因素可能影响这个决定？'
-  ],
-  3: [
-    '有没有我目前忽略的重要因素？',
-    '这个建议在什么情况下可能不适用？',
-    '请最后告诉我最值得优先考虑的一点。'
-  ]
-},
-    followupPrompt: (q, history) => `用户追问：「${q}」\n请从专业分析视角简短作答（100字以内），承接上文，不重复已说内容。`,
+    followups: [
+      '能具体说说短期内应该怎么做吗？',
+      '这个方向有哪些潜在风险需要注意？',
+      '如果暂时没有条件改变，有什么过渡方案？',
+    ],
+    followupPrompt: (q, history) => `用户追问：「${q}」\n请从职业规划视角简短作答（100字以内），承接上文，不重复已说内容。`,
   },
 };
 
@@ -929,6 +917,8 @@ const ST = {
   birth: '',
 
   history: [],
+  usedFollowups: [],
+  followupQuestions: [],
   surveyAnswers: {},
   mcAnswers: {},
 
@@ -1182,6 +1172,7 @@ scrollBottom();
 function handleFollowup(q, wrap) {
   wrap.remove();
   addMsg('user', q);
+ST.followupQuestions.push(q);
   callAI('followup', q);
 }
 function showFinalButton() {
@@ -1360,10 +1351,8 @@ async function submitSurvey() {
           concern: ST.concern || '',
           birth: ST.birth || '',
 
-history: ST.history.map(text => ({
-  role: 'assistant',
-  content: text
-})),
+history: ST.history,
+followup_questions: ST.followupQuestions,
           surveyAnswers: ST.surveyAnswers,
           mcAnswers: ST.mcAnswers,
 
